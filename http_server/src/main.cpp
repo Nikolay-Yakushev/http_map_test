@@ -1,4 +1,5 @@
 #include "../headers/server.h"
+
 void InMemoryStorage::set_value(std::string collection, std::string key, std::string value){
         // key=abc value 
         if (mem.find(collection)!=mem.end()){
@@ -31,70 +32,56 @@ void InMemoryStorage::delete_collection(std::string collection){
     }
 }
 
+
+void MyServer::set_item_handler(const httplib::Request&req, httplib::Response &res){  
+    auto collection = req.matches[1];
+    std::cout<<collection<<std::endl;
+    std::string data = req.body;
+    
+    //find key e.g "a" and value
+    std::string delim = "=";
+    std::size_t pos = 0;
+    if((pos = data.find(delim)) != std::string::npos){
+        std::size_t delim_pos = data.find(delim);
+        std::string key = data.substr(0, delim_pos);
+        data.erase(0, delim_pos+delim.length());
+        this->db->set_value(collection, key, data);
+        res.status=200;
+    }else{
+        res.set_content("No data was provided", "text/plain");
+        res.status=400;
+    }
+
+}
+
+void MyServer::get_item_handler(const httplib::Request&req, httplib::Response &res){  
+   auto collection = req.matches[1];
+    auto key = req.matches[2];
+    std::cout<<collection<<::std::endl;
+    std::cout<<key<<::std::endl;
+    std::string value = this->db->get_value(collection, key);
+    if (value=="None"){
+        res.body=value;
+        res.set_content(res.body, "text/plain");
+        res.status=404;
+    }else{
+        res.body=value;
+        res.set_content(res.body, "text/plain");
+        res.status=200;
+    }
+
+}
+
+void MyServer::delete_item_handler(const httplib::Request&req, httplib::Response &res){
+    auto collection = req.matches[1];
+    std::cout<<collection<<std::endl;
+    this->db->delete_collection(collection);
+    res.set_content("ok", "text/plain");
+    res.status=200;
+}
+
+
 int main(){
-    httplib::Server svr; 
-    InMemoryStorage* redis_memory =  new InMemoryStorage();
-
-    svr.Get("/hi", [](const httplib::Request& req, httplib::Response& res) {
-    std::cout<<"hee"<<std::endl;
-    res.set_content("Hello World!", "text/plain");
-    });
-
-     svr.Put(R"(/(\w+))", [&](
-        const httplib::Request&req, httplib::Response &res
-                        ) 
-                            {   
-                                auto collection = req.matches[1];
-                                std::cout<<collection<<std::endl;
-                                std::string data = req.body;
-                                
-                                //find key e.g "a" and value
-                                std::string delim = "=";
-                                std::size_t pos = 0;
-                                if((pos = data.find(delim)) != std::string::npos){
-                                    std::size_t delim_pos = data.find(delim);
-                                    std::string key = data.substr(0, delim_pos);
-                                    data.erase(0, delim_pos+delim.length());
-    
-                                    redis_memory->set_value(collection, key, data);
-                                    res.status=200;
-                                }else{
-                                    res.set_content("No data was provided", "text/plain");
-                                    res.status=400;
-                                }
-                            }
-            );
-    
-    svr.Get(R"(/(\w+)/(\w+))", [&](
-        const httplib::Request&req, httplib::Response &res
-                        )   {    
-                                auto collection = req.matches[1];
-                                auto key = req.matches[2];
-                                std::cout<<collection<<::std::endl;
-                                std::cout<<key<<::std::endl;
-                                std::string value = redis_memory->get_value(collection, key);
-                                if (value=="None"){
-                                    res.body=value;
-                                    res.set_content(res.body, "text/plain");
-                                    res.status=404;
-                                }else{
-                                    res.body=value;
-                                    res.set_content(res.body, "text/plain");
-                                    res.status=200;
-                                }
-                            }
-            );
-    svr.Delete(R"(/(\w+))", [&](
-        const httplib::Request&req, httplib::Response &res
-                        )   {   
-                                auto collection = req.matches[1];
-                                std::cout<<collection<<std::endl;
-                                redis_memory->delete_collection(collection);
-                                res.set_content("ok", "text/plain");
-                                res.status=200;
-
-                            }
-            );
-    svr.listen("127.0.0.1", 8080);
-    delete redis_memory;
+    MyServer *serv = new MyServer("127.0.0.1", 8080);
+    delete serv;
 }
