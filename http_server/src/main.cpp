@@ -2,51 +2,51 @@
 #include <optional>
 
 
-// void* InMemoryStorage::set_value(std::string collection, std::string key, std::string value){
-//         // key=abc value 
-//         if (mem.find(collection)!=mem.end()){
-//             mem[collection][key]=value;
-//             std::cout<<"set to existed"<<std::endl;
-//         }else{
-//              // {abc: {a: 1}}
-//             std::cout<<"set to new"<<std::endl;
-//             std::map<std::string, std::string> in_mem;
-//             in_mem[key] = value;
-//             mem[collection] = in_mem;
-//         }
-// }
+void* InMemoryStorage::set_value(std::string collection, std::string key, std::string value){
+        // key=abc value 
+        if (mem.find(collection)!=mem.end()){
+            mem[collection][key]=value;
+            std::cout<<"set to existed"<<std::endl;
+        }else{
+             // {abc: {a: 1}}
+            std::cout<<"set to new"<<std::endl;
+            std::map<std::string, std::string> in_mem;
+            in_mem[key] = value;
+            mem[collection] = in_mem;
+        }
+}
 
-// std::string* InMemoryStorage::get_value(std::string collection, std::string key){
-//     std::string *res = nullptr;
-//     if (mem.find(collection)!=mem.end()){ 
-//         std::cout<<"first"<<std::endl;
-//         if(mem[collection].find(key)!=mem[collection].end()){
-//             std::cout<<"sec"<<std::endl;
-//             res = &mem[collection][key];
-//             return res;
-//         }
-//     }
-//     return res;
-// }
-
-
-// void* InMemoryStorage::delete_collection(std::string collection){
-//     std::cout<<"collection is= "<<collection<<std::endl;
-//     if (mem.find(collection)!=mem.end()){
-//         mem.erase(collection); 
-//     }
-// }
+std::string* InMemoryStorage::get_value(std::string collection, std::string key){
+    std::string *res = nullptr;
+    if (mem.find(collection)!=mem.end()){ 
+        std::cout<<"first"<<std::endl;
+        if(mem[collection].find(key)!=mem[collection].end()){
+            std::cout<<"sec"<<std::endl;
+            res = &mem[collection][key];
+            return res;
+        }
+    }
+    return res;
+}
 
 
+void* InMemoryStorage::delete_collection(std::string collection){
+    std::cout<<"collection is= "<<collection<<std::endl;
+    if (mem.find(collection)!=mem.end()){
+        mem.erase(collection); 
+    }
+}
 
-// std::string* RedisStorage::get_value(std::string collection, std::string key){
-//     auto val = red->get("collection");
-//     if(val){
-//        return val;
-//     }
-//     return nullptr;
 
-// }
+
+std::string* RedisStorage::get_value(std::string collection, std::string key){
+    auto val = red->get("collection");
+    if(val){
+       return val;
+    }
+    return nullptr;
+
+}
 
 void* RedisStorage::set_value(std::string collection, std::string key, std::string value){
     // sw::redis::OptionalString col = static_cast<sw::redis::OptionalString>(collection);
