@@ -1,37 +1,68 @@
-#include "../headers/server.h"
+#include "../headers/server.hpp"
+#include <optional>
 
-void InMemoryStorage::set_value(std::string collection, std::string key, std::string value){
-        // key=abc value 
-        if (mem.find(collection)!=mem.end()){
-            mem[collection][key]=value;
-            std::cout<<"set to existed"<<std::endl;
-        }else{
-             // {abc: {a: 1}}
-            std::cout<<"set to new"<<std::endl;
-            std::map<std::string, std::string> in_mem;
-            in_mem[key] = value;
-            mem[collection] = in_mem;
-        }
+
+// void* InMemoryStorage::set_value(std::string collection, std::string key, std::string value){
+//         // key=abc value 
+//         if (mem.find(collection)!=mem.end()){
+//             mem[collection][key]=value;
+//             std::cout<<"set to existed"<<std::endl;
+//         }else{
+//              // {abc: {a: 1}}
+//             std::cout<<"set to new"<<std::endl;
+//             std::map<std::string, std::string> in_mem;
+//             in_mem[key] = value;
+//             mem[collection] = in_mem;
+//         }
+// }
+
+// std::string* InMemoryStorage::get_value(std::string collection, std::string key){
+//     std::string *res = nullptr;
+//     if (mem.find(collection)!=mem.end()){ 
+//         std::cout<<"first"<<std::endl;
+//         if(mem[collection].find(key)!=mem[collection].end()){
+//             std::cout<<"sec"<<std::endl;
+//             res = &mem[collection][key];
+//             return res;
+//         }
+//     }
+//     return res;
+// }
+
+
+// void* InMemoryStorage::delete_collection(std::string collection){
+//     std::cout<<"collection is= "<<collection<<std::endl;
+//     if (mem.find(collection)!=mem.end()){
+//         mem.erase(collection); 
+//     }
+// }
+
+
+
+// std::string* RedisStorage::get_value(std::string collection, std::string key){
+//     auto val = red->get("collection");
+//     if(val){
+//        return val;
+//     }
+//     return nullptr;
+
+// }
+
+void* RedisStorage::set_value(std::string collection, std::string key, std::string value){
+    // sw::redis::OptionalString col = static_cast<sw::redis::OptionalString>(collection);
+    // sw::redis::OptionalString k = static_cast<sw::redis::OptionalString>(key);
+    // sw::redis::OptionalString v  = static_cast<sw::redis::OptionalString>(value);
+       // sw::redis::Optional<std::string> collection = collection;
+    // sw::redis::Optional<std::string> key = key;
+    // sw::redis::Optional<std::string> value = value;
+    red.hset(collection, key, value);
+
 }
 
-std::string InMemoryStorage::get_value(std::string collection, std::string key){
-    if (mem.find(collection)!=mem.end()){ 
-        std::cout<<"first"<<std::endl;
-        if(mem[collection].find(key)!=mem[collection].end()){
-            std::cout<<"sec"<<std::endl;
-            return mem[collection][key];
-        }
-    }
-    return "None";
-}
 
-void InMemoryStorage::delete_collection(std::string collection){
-    std::cout<<"collection is= "<<collection<<std::endl;
-    if (mem.find(collection)!=mem.end()){
-        mem.erase(collection); 
-    }
+void* RedisStorage::delete_collection(std::string collection){
+    red.del(collection);
 }
-
 
 void MyServer::set_item_handler(const httplib::Request&req, httplib::Response &res){  
     auto collection = req.matches[1];
@@ -45,7 +76,7 @@ void MyServer::set_item_handler(const httplib::Request&req, httplib::Response &r
         std::size_t delim_pos = data.find(delim);
         std::string key = data.substr(0, delim_pos);
         data.erase(0, delim_pos+delim.length());
-        this->db->set_value(collection, key, data);
+        db.set_value(collection, key, data);
         res.status=200;
     }else{
         res.set_content("No data was provided", "text/plain");
@@ -59,13 +90,13 @@ void MyServer::get_item_handler(const httplib::Request&req, httplib::Response &r
     auto key = req.matches[2];
     std::cout<<collection<<::std::endl;
     std::cout<<key<<::std::endl;
-    std::string value = this->db->get_value(collection, key);
-    if (value=="None"){
-        res.body=value;
+    std::string *value = db.get_value(collection, key);
+    if (value==nullptr){
+        res.body="None";
         res.set_content(res.body, "text/plain");
         res.status=404;
     }else{
-        res.body=value;
+        res.body=*(value);
         res.set_content(res.body, "text/plain");
         res.status=200;
     }
@@ -75,13 +106,16 @@ void MyServer::get_item_handler(const httplib::Request&req, httplib::Response &r
 void MyServer::delete_item_handler(const httplib::Request&req, httplib::Response &res){
     auto collection = req.matches[1];
     std::cout<<collection<<std::endl;
-    this->db->delete_collection(collection);
+    db.delete_collection(collection);
     res.set_content("ok", "text/plain");
     res.status=200;
 }
 
 
 int main(){
-    MyServer *serv = new MyServer("127.0.0.1", 8080);
+    IMyStorage *storage = new RedisStorage();
+    //MyStorage *storage  = new InMemoryStorage();
+
+    MyServer *serv = new MyServer("127.0.0.1", 8080, *storage);
     delete serv;
 }
