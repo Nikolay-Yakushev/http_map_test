@@ -40,23 +40,18 @@ void* InMemoryStorage::delete_collection(std::string collection){
 
 
 std::string* RedisStorage::get_value(std::string collection, std::string key){
-    auto val = red->get("collection");
+    std::string *res = nullptr; 
+    auto val = red.hget(collection, key);
     if(val){
-       return val;
+       res = &(*val);
+       std::cout<<"res= "<<*res<<std::endl;
     }
-    return nullptr;
+    return res;
 
 }
 
 void* RedisStorage::set_value(std::string collection, std::string key, std::string value){
-    // sw::redis::OptionalString col = static_cast<sw::redis::OptionalString>(collection);
-    // sw::redis::OptionalString k = static_cast<sw::redis::OptionalString>(key);
-    // sw::redis::OptionalString v  = static_cast<sw::redis::OptionalString>(value);
-       // sw::redis::Optional<std::string> collection = collection;
-    // sw::redis::Optional<std::string> key = key;
-    // sw::redis::Optional<std::string> value = value;
     red.hset(collection, key, value);
-
 }
 
 
@@ -96,7 +91,14 @@ void MyServer::get_item_handler(const httplib::Request&req, httplib::Response &r
         res.set_content(res.body, "text/plain");
         res.status=404;
     }else{
-        res.body=*(value);
+        try{
+            std::string response = *value;
+            std::cout<<"response="<<response<<std::endl;
+            res.body=response;
+        }catch(const std::exception &err){
+            std::cout<<err.what()<<std::endl;
+        }
+
         res.set_content(res.body, "text/plain");
         res.status=200;
     }
