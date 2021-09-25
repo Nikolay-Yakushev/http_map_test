@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include<vector>
-
+#include <optional>
 #include <sw/redis++/redis++.h>
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
@@ -15,9 +15,9 @@ class IMyStorage
     public:
         virtual ~IMyStorage(){};
 
-    virtual std::string* get_value(std::string collection, std::string key)=0;
-    virtual void* set_value(std::string collection, std::string key, std::string value)=0;
-    virtual void*  delete_collection(std::string collection)=0;
+    virtual std::string get_value(std::string collection, std::string key)=0;
+    virtual void set_value(std::string collection, std::string key, std::string value)=0;
+    virtual void  delete_collection(std::string collection)=0;
 };
 
 
@@ -29,9 +29,9 @@ class InMemoryStorage: public IMyStorage
         InMemoryStorage(){};
         ~InMemoryStorage(){};
     
-    std::string* get_value(std::string collection, std::string key);
-    void* set_value(std::string collection, std::string key, std::string value);
-    void* delete_collection(std::string collection);
+    std::string get_value(std::string collection, std::string key);
+    void set_value(std::string collection, std::string key, std::string value);
+    void delete_collection(std::string collection);
 
 };
 
@@ -48,13 +48,11 @@ class RedisStorage: public IMyStorage
             auto red = sw::redis::Redis(tcp_string);
             
         }   
-        ~RedisStorage(){
-
-        }
+        ~RedisStorage(){}
     
-    std::string* get_value(std::string collection, std::string key);
-    void* set_value(std::string collection, std::string key, std::string value);
-    void* delete_collection(std::string collection);
+    std::string get_value(std::string collection, std::string key);
+    void set_value(std::string collection, std::string key, std::string value);
+    void delete_collection(std::string collection);
 
 };
 
