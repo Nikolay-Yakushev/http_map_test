@@ -1,0 +1,3 @@
+/home/driver220v/CPR/CPPProjects/http_map_test/http_server/build/CMakeFiles/rebuild_cache.dir
+/home/driver220v/CPR/CPPProjects/http_map_test/http_server/build/CMakeFiles/edit_cache.dir
+/home/driver220v/CPR/CPPProjects/http_map_test/http_server/build/CMakeFiles/executable.dir

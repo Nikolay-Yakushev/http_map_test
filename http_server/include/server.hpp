@@ -2,6 +2,7 @@
 #include<string>
 #include "../libs/cpp-httplib/httplib.h"
 #include<map>
+#include "../libs/argparse/include/argparse/argparse.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include<vector>
@@ -15,9 +16,9 @@ class IMyStorage
     public:
         virtual ~IMyStorage(){};
 
-    virtual std::string* get_value(std::string collection, std::string key)=0;
-    virtual void* set_value(std::string collection, std::string key, std::string value)=0;
-    virtual void*  delete_collection(std::string collection)=0;
+    virtual std::optional<std::string> get_value(std::string collection, std::string key)=0;
+    virtual void set_value(std::string collection, std::string key, std::string value)=0;
+    virtual void  delete_collection(std::string collection)=0;
 };
 
 
@@ -29,9 +30,9 @@ class InMemoryStorage: public IMyStorage
         InMemoryStorage(){};
         ~InMemoryStorage(){};
     
-    std::string* get_value(std::string collection, std::string key);
-    void* set_value(std::string collection, std::string key, std::string value);
-    void* delete_collection(std::string collection);
+    virtual std::optional<std::string> get_value(std::string collection, std::string key) override;
+    void set_value(std::string collection, std::string key, std::string value) override;
+    void delete_collection(std::string collection) override;
 
 };
 
@@ -52,9 +53,9 @@ class RedisStorage: public IMyStorage
 
         }
     
-    std::string* get_value(std::string collection, std::string key);
-    void* set_value(std::string collection, std::string key, std::string value);
-    void* delete_collection(std::string collection);
+    virtual std::optional<std::string> get_value(std::string collection, std::string key) override;
+    void set_value(std::string collection, std::string key, std::string value) override;
+    void delete_collection(std::string collection) override;
 
 };
 
@@ -65,7 +66,7 @@ class MyServer: public httplib::Server
         IMyStorage &db;
     public:
         MyServer(const char* host, int port, IMyStorage& storage)
-        :db(storage)// what is this?? 
+        :db(storage)
         {   
             serv.Put(R"(/(\w+))", [&](const httplib::Request&req, httplib::Response &res){
                 set_item_handler(req, res);

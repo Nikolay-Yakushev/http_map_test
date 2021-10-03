@@ -1,8 +1,8 @@
-#include "../headers/server.hpp"
+#include "../include/server.hpp"
 #include <optional>
 
 
-void* InMemoryStorage::set_value(std::string collection, std::string key, std::string value){
+void InMemoryStorage::set_value(std::string collection, std::string key, std::string value){
         // key=abc value 
         if (mem.find(collection)!=mem.end()){
             mem[collection][key]=value;
@@ -16,21 +16,20 @@ void* InMemoryStorage::set_value(std::string collection, std::string key, std::s
         }
 }
 
-std::string* InMemoryStorage::get_value(std::string collection, std::string key){
-    std::string *res = nullptr;
+ std::optional<std::string> InMemoryStorage::get_value(std::string collection, std::string key){
+    std::optional<std::string>res;
     if (mem.find(collection)!=mem.end()){ 
         std::cout<<"first"<<std::endl;
         if(mem[collection].find(key)!=mem[collection].end()){
             std::cout<<"sec"<<std::endl;
-            res = &mem[collection][key];
-            return res;
-        }
+            res = std::optional<std::reference_wrapper<std::string>>{mem[collection][key]};
+        }   
     }
     return res;
 }
 
 
-void* InMemoryStorage::delete_collection(std::string collection){
+void InMemoryStorage::delete_collection(std::string collection){
     std::cout<<"collection is= "<<collection<<std::endl;
     if (mem.find(collection)!=mem.end()){
         mem.erase(collection); 
@@ -39,23 +38,25 @@ void* InMemoryStorage::delete_collection(std::string collection){
 
 
 
-std::string* RedisStorage::get_value(std::string collection, std::string key){
-    std::string *res = nullptr; 
+ std::optional<std::string> RedisStorage::get_value(std::string collection, std::string key){
+    std::optional<std::string> res;
     auto val = red.hget(collection, key);
     if(val){
-       res = &(*val);
-       std::cout<<"res= "<<*res<<std::endl;
+        std::cout<<"value is "<<*val<<std::endl;
+        res=val;
     }
+    std::cout<<"res is"<<*res<<std::endl;
     return res;
 
 }
 
-void* RedisStorage::set_value(std::string collection, std::string key, std::string value){
+void RedisStorage::set_value(std::string collection, std::string key, std::string value){
+    std::cout<<"value is "<< value<<std::endl;
     red.hset(collection, key, value);
 }
 
 
-void* RedisStorage::delete_collection(std::string collection){
+void RedisStorage::delete_collection(std::string collection){
     red.del(collection);
 }
 
@@ -85,8 +86,8 @@ void MyServer::get_item_handler(const httplib::Request&req, httplib::Response &r
     auto key = req.matches[2];
     std::cout<<collection<<::std::endl;
     std::cout<<key<<::std::endl;
-    std::string *value = db.get_value(collection, key);
-    if (value==nullptr){
+    std::optional<std::string> value = db.get_value(collection, key);
+    if (value==std::nullopt){
         res.body="None";
         res.set_content(res.body, "text/plain");
         res.status=404;
@@ -114,10 +115,36 @@ void MyServer::delete_item_handler(const httplib::Request&req, httplib::Response
 }
 
 
-int main(){
-    IMyStorage *storage = new RedisStorage();
-    //MyStorage *storage  = new InMemoryStorage();
+int main(int argc, char *argv[]){
+   
+    argparse::ArgumentParser program("Server Storage Prog");
 
+    program.add_argument("-st", "--storage")
+    .default_value(std::string("inmemory"))
+    .required()
+    .help("specify type of stoarge : InMemory/Redis")
+    ;
+
+    try{
+        program.parse_args(argc, argv);
+    }
+    catch (const std::runtime_error& err){
+        std::cout << err.what() << std::endl;
+        std::cout << program;
+        exit(0);
+    }
+    IMyStorage *storage;
+    auto st = program.get<std::string>("--storage");
+    std::cout<<st<<"<< storage"<<std::endl;
+    if (st=="inmemory"){
+        std::cout<<"Started with storage : InMemory"<<std::endl;
+        storage  = new InMemoryStorage();
+        
+    }else{
+        std::cout<<"Started with storage : Redis"<<std::endl;
+        storage = new RedisStorage();
+    }
     MyServer *serv = new MyServer("127.0.0.1", 8080, *storage);
     delete serv;
+    
 }

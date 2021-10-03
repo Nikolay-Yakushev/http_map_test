@@ -65,6 +65,12 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp",
+        "netfwd": "cpp",
+        "cfenv": "cpp",
+        "cinttypes": "cpp",
+        "charconv": "cpp"
     }
 }

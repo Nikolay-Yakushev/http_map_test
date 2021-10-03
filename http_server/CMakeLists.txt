@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.1)
+project(Server)
+set (CMAKE_CXX_STANDARD 17)
+
+message("Testing enabled")
+file(GLOB SRC ${PROJECT_SOURCE_DIR}/src/*.cpp)
+
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/libs)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/libs)
+    execute_process(cd ${PROJECT_SOURCE_DIR}/libs/redis)
+    execute_process(make_directory($LIBS))
+    execute_process(cd $LIBS)
+    execute_process(git clone https://github.com/redis/hiredis.git)
+    execute_process(cd hiredis)
+    execute_process(make)
+    execute_process(make install)
+    execute_process(cd libs/redis)
+endif()
+# g++ -std=c++17 -o executable main.cpp -lredis++ -lhiredis -pthread
+add_executable(executable ${SRC})
+target_link_libraries(executable -lredis++)
+target_link_libraries(executable -lhiredis)
+target_link_libraries(executable -pthread)
